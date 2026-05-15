@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #0f0f0f;
+  --foreground: #ffffff;
+  --card: #1a1a1a;
+  --card-foreground: #ffffff;
+  --popover: #1a1a1a;
+  --popover-foreground: #ffffff;
+  --primary: #4a8fe8;
+  --primary-foreground: #ffffff;
+  --secondary: #1a1f8a;
+  --secondary-foreground: #ffffff;
+  --muted: #2a2a2a;
+  --muted-foreground: #a0a0a0;
+  --accent: #e8151a;
+  --accent-foreground: #ffffff;
+  --destructive: #e8151a;
+  --destructive-foreground: #ffffff;
+  --border: #2a2a2a;
+  --input: #1a1a1a;
+  --ring: #4a8fe8;
+  --radius: 0.5rem;
+  
+  /* Brand colors */
+  --navy-blue: #1a1f8a;
+  --royal-blue: #4a8fe8;
+  --brand-red: #e8151a;
+  --dark-bg: #0f0f0f;
+}
+
+@theme inline {
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-heading: var(--font-russo), system-ui, sans-serif;
+  --font-condensed: var(--font-barlow-condensed), system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Brand colors as Tailwind utilities */
+  --color-navy: var(--navy-blue);
+  --color-royal: var(--royal-blue);
+  --color-brand-red: var(--brand-red);
+  --color-dark-bg: var(--dark-bg);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom animations */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+/* Font utilities */
+.font-heading {
+  font-family: var(--font-russo), system-ui, sans-serif;
+}
+
+.font-condensed {
+  font-family: var(--font-barlow-condensed), system-ui, sans-serif;
+}
