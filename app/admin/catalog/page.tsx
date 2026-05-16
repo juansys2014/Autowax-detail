@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit, Trash2, X, Check, Clock, ChevronUp, TrendingUp } from "lucide-react"
+import { Plus, Edit, Trash2, X, Check, Clock, ChevronUp, TrendingUp, Search } from "lucide-react"
 
 type CatalogItem = {
   id: number; name: string; category: 'service'|'product'; price: number; active: number
@@ -26,6 +26,7 @@ export default function CatalogPage() {
   const [error, setError] = useState('')
   const [bulkError, setBulkError] = useState('')
   const [bulkSuccess, setBulkSuccess] = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => { loadItems() }, [])
 
@@ -108,7 +109,11 @@ export default function CatalogPage() {
     setSaving(false)
   }
 
-  const filtered = items.filter(i => filter === 'all' || i.category === filter)
+  const filtered = items.filter(i => {
+    const matchesCategory = filter === 'all' || i.category === filter
+    const matchesSearch = !search.trim() || i.name.toLowerCase().includes(search.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
   const services = filtered.filter(i => i.category === 'service')
   const products = filtered.filter(i => i.category === 'product')
 
@@ -200,17 +205,36 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {(['all','service','product'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${filter === f ? 'bg-[#e8151a] text-white' : 'bg-[#1e1e1e] border border-[#2a2a2a] text-gray-400 hover:text-white'}`}>
             {f === 'all' ? `All (${items.length})` : `${f}s (${items.filter(i=>i.category===f).length})`}
           </button>
         ))}
+        <div className="relative ml-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none"/>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name..."
+            className="pl-9 pr-4 py-2 bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#4a8fe8] w-56"
+          />
+          {search && (
+            <button onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+              <X className="h-3.5 w-3.5"/>
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
         <div className="text-center text-gray-500 py-12">Loading catalog...</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center text-gray-500 py-12">
+          No items match <span className="text-white">"{search}"</span>
+        </div>
       ) : (
         <div className="space-y-6">
           {(filter === 'all' || filter === 'service') && services.length > 0 && (

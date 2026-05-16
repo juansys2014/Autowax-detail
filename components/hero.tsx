@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 
 const StarIcon = () => (
@@ -70,10 +72,11 @@ export function Hero() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button 
               size="lg" 
-              className="bg-brand-red hover:bg-brand-red/90 text-white font-condensed uppercase tracking-wide px-8 py-6 text-lg"
-            >
+               className="bg-brand-red hover:bg-brand-red/90 text-white font-condensed uppercase tracking-wide px-8 py-6 text-lg"
+               onClick={() => window.location.href = '/book'}
+>
               Book Appointment
-            </Button>
+          </Button>
             <Button 
               size="lg" 
               variant="outline" 

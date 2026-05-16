@@ -12,7 +12,13 @@ export const userQueries = {
     queryOne<any>('SELECT id, name, email, phone, role, active, created_at FROM users WHERE id = ?', [id]),
 
   findAll: () =>
-    query<any>('SELECT id, name, email, phone, role, active, created_at FROM users ORDER BY created_at DESC'),
+    query<any>(`
+      SELECT u.id, u.name, u.email, u.phone, u.role, u.role_id, u.active, u.created_at,
+        r.name AS role_name, r.color AS role_color
+      FROM users u
+      LEFT JOIN roles r ON r.id = u.role_id
+      ORDER BY u.created_at DESC
+    `),
 
   create: (data: { name: string; email?: string; phone?: string; password_hash?: string; role: string }) =>
     execute('INSERT INTO users (name, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?)',
@@ -64,11 +70,17 @@ export const sellerQueries = {
     execute('INSERT INTO sellers (user_id, qr_code, qr_url, commission_type, commission_value) VALUES (?, ?, ?, ?, ?)',
       [data.user_id, data.qr_code, data.qr_url, data.commission_type, data.commission_value]),
 
-  update: (id: number, data: Partial<{ commission_type: string; commission_value: number; active: number; notes: string }>) => {
-    const fields = Object.keys(data).map(k => `${k} = ?`).join(', ')
-    const values = [...Object.values(data), id]
-    return execute(`UPDATE sellers SET ${fields} WHERE id = ?`, values)
-  },
+  update: (id: number, data: Partial<{ commission_type: string; commission_value: number; active: number; notes: string; device_token: string | null }>) => {
+  const fields = Object.keys(data).map(k => `${k} = ?`).join(', ')
+  const values = [...Object.values(data), id]
+  return execute(`UPDATE sellers SET ${fields} WHERE id = ?`, values)
+},
+
+updateUser: (sellerId: number, data: Partial<{ name: string; phone: string; email: string | null }>) => {
+  const fields = Object.keys(data).map(k => `u.${k} = ?`).join(', ')
+  const values = [...Object.values(data), sellerId]
+  return execute(`UPDATE users u JOIN sellers s ON s.user_id = u.id SET ${fields} WHERE s.id = ?`, values)
+},
 
   getStats: (sellerId: number) =>
     queryOne<any>(`
@@ -80,6 +92,48 @@ export const sellerQueries = {
         (SELECT COALESCE(SUM(amount),0) FROM commissions WHERE seller_id = ? AND status = 'paid'
           AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())) AS earned_this_month
     `, [sellerId, sellerId, sellerId, sellerId, sellerId]),
+}
+
+// ─── ROLES ────────────────────────────────────────────────────
+export const roleQueries = {
+  findAll: async () => {
+    const roles = await query<any>('SELECT * FROM roles ORDER BY is_system DESC, name ASC')
+    const perms = await query<any>('SELECT * FROM role_permissions ORDER BY role_id, module')
+    return roles.map((r: any) => ({
+      ...r,
+      permissions: perms.filter((p: any) => p.role_id === r.id),
+    }))
+  },
+
+  findById: async (id: number) => {
+    const role = await queryOne<any>('SELECT * FROM roles WHERE id = ?', [id])
+    if (!role) return null
+    const permissions = await query<any>('SELECT * FROM role_permissions WHERE role_id = ?', [id])
+    return { ...role, permissions }
+  },
+
+  create: (data: { name: string; description: string; color: string }) =>
+    execute('INSERT INTO roles (name, description, color) VALUES (?, ?, ?)',
+      [data.name, data.description, data.color]),
+
+  update: (id: number, data: { name: string; description: string; color: string }) =>
+    execute('UPDATE roles SET name = ?, description = ?, color = ? WHERE id = ?',
+      [data.name, data.description, data.color, id]),
+
+  delete: (id: number) =>
+    execute('DELETE FROM roles WHERE id = ? AND is_system = 0', [id]),
+
+  setPermissions: async (roleId: number, permissions: Array<{
+    module: string; can_view: number; can_create: number; can_edit: number; can_delete: number
+  }>) => {
+    await execute('DELETE FROM role_permissions WHERE role_id = ?', [roleId])
+    for (const p of permissions) {
+      await execute(
+        'INSERT INTO role_permissions (role_id, module, can_view, can_create, can_edit, can_delete) VALUES (?, ?, ?, ?, ?, ?)',
+        [roleId, p.module, p.can_view, p.can_create, p.can_edit, p.can_delete]
+      )
+    }
+  },
 }
 
 // ─── CLIENTS ──────────────────────────────────────────────────
@@ -214,10 +268,13 @@ export const invoiceQueries = {
   findAll: (filters?: { status?: string; client_id?: number }) => {
     let sql = `
       SELECT i.*, c.name AS client_name, c.phone AS client_phone,
-        u.name AS paid_by_name
+        u.name AS paid_by_name,
+        su.name AS seller_name
       FROM invoices i
       JOIN clients c ON c.id = i.client_id
       LEFT JOIN users u ON u.id = i.paid_by
+      LEFT JOIN sellers s ON s.id = c.seller_id
+      LEFT JOIN users su ON su.id = s.user_id
       WHERE 1=1
     `
     const values: unknown[] = []

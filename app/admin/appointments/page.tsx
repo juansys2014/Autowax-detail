@@ -1,5 +1,6 @@
 "use client"
 
+import { formatPhone } from '@/lib/utils/format'
 import { useState, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, Phone, X, Check, Car, Calendar, Plus, Search, Edit2 } from "lucide-react"
 
@@ -449,7 +450,7 @@ export default function AppointmentsPage() {
                     <div className="flex items-center justify-between bg-[#4a8fe8]/10 border border-[#4a8fe8]/30 rounded-lg px-4 py-3">
                       <div>
                         <p className="text-white text-sm font-medium">{selectedClient.name}</p>
-                        <p className="text-gray-400 text-xs">{selectedClient.phone}</p>
+                        <p className="text-gray-400 text-xs">{formatPhone(selectedClient.phone)}</p>
                       </div>
                       <button onClick={()=>{setSelectedClient(null);setClientQuery("");setShowClientDrop(true)}} className="text-gray-400 hover:text-white ml-3">
                         <X className="w-4 h-4"/>
@@ -470,7 +471,7 @@ export default function AppointmentsPage() {
                             <button key={c.id} onMouseDown={()=>{setSelectedClient(c);setClientQuery(c.name);setShowClientDrop(false)}}
                               className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#2a2a2a] text-left border-b border-[#2a2a2a] last:border-0">
                               <p className="text-white text-sm">{c.name}</p>
-                              <p className="text-gray-500 text-xs">{c.phone}</p>
+                              <p className="text-gray-500 text-xs">{formatPhone(c.phone)}</p>
                             </button>
                           ))}
                         </div>
@@ -609,9 +610,9 @@ function AppCard({ apt, onUpdate, onEdit, saving }: {
           <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Client</p>
           <p className="text-white font-semibold text-sm leading-tight">{apt.client_name}</p>
           {apt.client_phone && (
-            <a href={`tel:${apt.client_phone}`} className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#4a8fe8] transition-colors">
+            <a href={`tel:${formatPhone(apt.client_phone)}`} className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#4a8fe8] transition-colors">
               <Phone className="w-3 h-3 flex-shrink-0"/>
-              <span>{apt.client_phone}</span>
+              <span>{formatPhone(apt.client_phone)}</span>
             </a>
           )}
           {apt.seller_name && apt.seller_name !== 'Direct' && (
@@ -673,7 +674,7 @@ function AppCard({ apt, onUpdate, onEdit, saving }: {
           </button>
         )}
         {apt.client_phone && (
-          <a href={`tel:${apt.client_phone}`}
+          <a href={`tel:${formatPhone(apt.client_phone)}`}
             className="flex items-center gap-1 px-2 py-1 bg-[#1e1e1e] hover:bg-[#2a2a2a] text-gray-400 border border-[#2a2a2a] rounded text-xs font-medium transition-colors ml-auto">
             <Phone className="w-3 h-3"/> Call
           </a>

@@ -1,11 +1,13 @@
 "use client"
 
+import { formatPhone } from '@/lib/utils/format'
 import { useState, useEffect, useRef } from "react"
 import { Search, FileText, Plus, X, Check, DollarSign } from "lucide-react"
 
 type Invoice = {
   id: number; invoice_number: string; client_name: string; client_phone: string
   total: number; payment_method: string; status: string; paid_at: string | null; created_at: string
+  seller_name: string | null
 }
 type Stats = { month_revenue: number; month_invoices: number; avg_ticket: number; pending_revenue: number }
 type Client = { id: number; name: string; phone: string; email: string | null; seller_name: string | null; last_service: string | null }
@@ -279,7 +281,7 @@ export default function BillingPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#2a2a2a]">
-                  {['Invoice','Client','Amount','Method','Date','Status',''].map(h => (
+                  {['Invoice','Client','Amount','Method','Referred By','Date','Status',''].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs text-gray-500 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -300,6 +302,12 @@ export default function BillingPage() {
                     <td className="px-4 py-3 font-bold text-white">${Number(inv.total).toFixed(2)}</td>
                     <td className="px-4 py-3 text-xs text-gray-400 capitalize">
                       {PAY_METHODS.find(m => m.value === inv.payment_method)?.icon} {inv.payment_method}
+                    </td>
+                    <td className="px-4 py-3">
+                      {inv.seller_name
+                        ? <span className="text-xs text-[#4a8fe8]">{inv.seller_name}</span>
+                        : <span className="text-xs px-2 py-0.5 rounded-full bg-gray-700/50 text-gray-400 border border-gray-600/30">Direct</span>
+                      }
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-sm">
                       {new Date(inv.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
@@ -325,7 +333,7 @@ export default function BillingPage() {
                   <tr className="border-t border-[#2a2a2a] bg-[#252525]">
                     <td colSpan={2} className="px-4 py-3 text-xs text-gray-500">{filtered.length} invoices</td>
                     <td className="px-4 py-3 font-bold text-white">${filteredTotal.toFixed(2)}</td>
-                    <td colSpan={4} />
+                    <td colSpan={5} />
                   </tr>
                 </tfoot>
               )}
@@ -354,17 +362,29 @@ export default function BillingPage() {
                   </button>
                 </div>
                 {isNewClient ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    <input value={newClientName} onChange={e => setNewClientName(e.target.value)} placeholder="Full Name *"
-                      className="px-4 py-3 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-[#4a8fe8] text-sm" />
-                    <input value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)} placeholder="Phone *"
-                      className="px-4 py-3 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-[#4a8fe8] text-sm" />
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <input value={newClientName} onChange={e => setNewClientName(e.target.value)} placeholder="Full Name *"
+                        className="px-4 py-3 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-[#4a8fe8] text-sm" />
+                      <input value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)} placeholder="Phone *"
+                        className="px-4 py-3 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-[#4a8fe8] text-sm" />
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border border-gray-600/30 rounded-lg">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-700 text-gray-400 border border-gray-600/40 font-medium">Direct</span>
+                      <span className="text-xs text-gray-500">Walk-in — no seller commission will be generated</span>
+                    </div>
                   </div>
                 ) : selectedClient ? (
                   <div className="flex items-center justify-between bg-[#4a8fe8]/10 border border-[#4a8fe8]/30 rounded-lg px-4 py-3">
                     <div>
                       <p className="text-white text-sm font-medium">{selectedClient.name}</p>
-                      <p className="text-gray-400 text-xs">{selectedClient.phone}{selectedClient.seller_name ? ` · Referred by ${selectedClient.seller_name}` : ''}</p>
+                      <p className="text-gray-400 text-xs">
+                        {formatPhone(selectedClient.phone)}
+                        {selectedClient.seller_name
+                          ? <span className="text-[#4a8fe8] ml-1">· Referred by {selectedClient.seller_name}</span>
+                          : <span className="ml-1 px-1.5 py-0.5 rounded bg-gray-700/60 text-gray-400 text-[10px]">Direct</span>
+                        }
+                      </p>
                     </div>
                     <button onClick={() => { setSelectedClient(null); setClientQuery(""); setShowClientDrop(true) }} className="text-gray-400 hover:text-white ml-3">
                       <X className="w-4 h-4" />
@@ -386,7 +406,7 @@ export default function BillingPage() {
                             className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#2a2a2a] transition-colors text-left border-b border-[#2a2a2a] last:border-0">
                             <div>
                               <p className="text-white text-sm font-medium">{c.name}</p>
-                              <p className="text-gray-500 text-xs">{c.phone}{c.seller_name ? ` · Ref: ${c.seller_name}` : ''}</p>
+                              <p className="text-gray-500 text-xs">{formatPhone(c.phone)}{c.seller_name ? ` · Ref: ${c.seller_name}` : ''}</p>
                             </div>
                             {c.last_service && <p className="text-xs text-gray-600 ml-2 truncate max-w-[120px]">{c.last_service}</p>}
                           </button>

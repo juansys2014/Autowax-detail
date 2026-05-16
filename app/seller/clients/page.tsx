@@ -1,5 +1,6 @@
 "use client"
 
+import { formatPhone } from '@/lib/utils/format'
 import { useState } from "react"
 
 interface Client {
@@ -119,7 +120,7 @@ export default function SellerClientsPage() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">{selectedClient.name}</h2>
-              <p className="text-sm text-neutral-400">{selectedClient.phone}</p>
+              <p className="text-sm text-neutral-400">{formatPhone(selectedClient.phone)}</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -202,7 +203,7 @@ export default function SellerClientsPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{client.name}</p>
-              <p className="text-xs text-neutral-500">{client.phone}</p>
+              <p className="text-xs text-neutral-500">{formatPhone(client.phone)}</p>
             </div>
             <div className="text-right flex-shrink-0">
               <p className="text-sm text-green-500">${client.commissionEarned.toFixed(2)}</p>

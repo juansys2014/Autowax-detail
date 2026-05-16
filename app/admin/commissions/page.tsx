@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Filter, Check, Calendar as CalendarIcon, X } from "lucide-react"
+import { Search, Check, Calendar as CalendarIcon, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,7 +37,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 
 interface Commission {
@@ -65,16 +64,14 @@ const initialCommissions: Commission[] = [
   { id: 10, seller: "Carlos Reyes", client: "Mark Stevens", service: "Interior Deep Clean", invoiceAmount: 200, commissionAmount: 20, date: "2026-05-06", status: "pending" },
 ]
 
-const sellers = ["All Sellers", "Carlos Reyes", "Ana Lopez", "Diego Fernandez", "Miguel Santos", "Sofia Martinez"]
-
 export default function CommissionsPage() {
   const [commissions, setCommissions] = useState<Commission[]>(initialCommissions)
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all")
-  const [sellerFilter, setSellerFilter] = useState("All Sellers")
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: undefined,
     to: undefined,
   })
+  const [searchQuery, setSearchQuery] = useState("")
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [isPayModalOpen, setIsPayModalOpen] = useState(false)
   const [paymentDate, setPaymentDate] = useState<Date>(new Date())
@@ -82,9 +79,12 @@ export default function CommissionsPage() {
 
   const filteredCommissions = commissions.filter((c) => {
     if (statusFilter !== "all" && c.status !== statusFilter) return false
-    if (sellerFilter !== "All Sellers" && c.seller !== sellerFilter) return false
     if (dateRange.from && new Date(c.date) < dateRange.from) return false
     if (dateRange.to && new Date(c.date) > dateRange.to) return false
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      if (!c.seller.toLowerCase().includes(q) && !c.client.toLowerCase().includes(q)) return false
+    }
     return true
   })
 
@@ -130,17 +130,59 @@ export default function CommissionsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-heading text-2xl text-foreground">Commissions</h1>
           <p className="text-sm text-muted-foreground">Track and pay seller commissions</p>
         </div>
-        {selectedIds.length > 0 && (
-          <Button onClick={() => setIsPayModalOpen(true)} className="bg-green-600 hover:bg-green-700">
-            <Check className="mr-2 h-4 w-4" />
-            Pay Selected ({selectedIds.length}) - ${selectedTotal}
-          </Button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="border-border h-8 text-xs font-normal">
+                <CalendarIcon className="mr-1.5 h-3 w-3"/>
+                {dateRange.from ? (
+                  dateRange.to
+                    ? `${format(dateRange.from, "LLL dd")} - ${format(dateRange.to, "LLL dd")}`
+                    : format(dateRange.from, "LLL dd, y")
+                ) : "Date range"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-[#1e1e1e] border-border" align="end">
+              <Calendar mode="range" selected={dateRange}
+                onSelect={range => setDateRange({ from: range?.from, to: range?.to })}
+                numberOfMonths={2}/>
+            </PopoverContent>
+          </Popover>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"/>
+            <Input placeholder="Search seller or client..."
+              value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              className="pl-8 bg-background border-border h-8 text-xs w-52"/>
+          </div>
+          <Select value={statusFilter} onValueChange={v => setStatusFilter(v as "all" | "pending" | "paid")}>
+            <SelectTrigger className="w-[100px] bg-background border-border h-8 text-xs">
+              <SelectValue>{statusFilter === "all" ? "All" : statusFilter === "pending" ? "Pending" : "Paid"}</SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-[#1e1e1e] border-border">
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+            </SelectContent>
+          </Select>
+          {(searchQuery || dateRange.from || statusFilter !== "all") && (
+            <Button variant="ghost" size="sm"
+              onClick={() => { setSearchQuery(""); setDateRange({ from: undefined, to: undefined }); setStatusFilter("all") }}
+              className="text-muted-foreground h-8 px-2">
+              <X className="h-3 w-3"/>
+            </Button>
+          )}
+          {selectedIds.length > 0 && (
+            <Button onClick={() => setIsPayModalOpen(true)} className="bg-green-600 hover:bg-green-700 h-8 text-xs">
+              <Check className="mr-1.5 h-3 w-3"/>
+              Pay ({selectedIds.length}) — ${selectedTotal}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -165,102 +207,10 @@ export default function CommissionsPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card className="bg-[#1e1e1e] border-border">
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={statusFilter === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("all")}
-                className={statusFilter === "all" ? "bg-primary" : "border-border"}
-              >
-                All
-              </Button>
-              <Button
-                variant={statusFilter === "pending" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("pending")}
-                className={statusFilter === "pending" ? "bg-yellow-600" : "border-border"}
-              >
-                Pending
-              </Button>
-              <Button
-                variant={statusFilter === "paid" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter("paid")}
-                className={statusFilter === "paid" ? "bg-green-600" : "border-border"}
-              >
-                Paid
-              </Button>
-            </div>
-
-            {/* Seller Filter */}
-            <Select value={sellerFilter} onValueChange={setSellerFilter}>
-              <SelectTrigger className="w-[180px] bg-background border-border">
-                <SelectValue placeholder="Select seller" />
-              </SelectTrigger>
-              <SelectContent className="bg-[#1e1e1e] border-border">
-                {sellers.map((seller) => (
-                  <SelectItem key={seller} value={seller}>{seller}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Date Range */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="border-border justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}
-                      </>
-                    ) : (
-                      format(dateRange.from, "LLL dd, y")
-                    )
-                  ) : (
-                    "Date range"
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-[#1e1e1e] border-border" align="start">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
-                  numberOfMonths={2}
-                />
-              </PopoverContent>
-            </Popover>
-
-            {(dateRange.from || sellerFilter !== "All Sellers") && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setDateRange({ from: undefined, to: undefined })
-                  setSellerFilter("All Sellers")
-                }}
-                className="text-muted-foreground"
-              >
-                <X className="mr-1 h-4 w-4" />
-                Clear filters
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Commissions Table */}
       <Card className="bg-[#1e1e1e] border-border">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold">
-            Commissions ({filteredCommissions.length})
-          </CardTitle>
+          <CardTitle className="text-lg font-semibold">Commissions ({filteredCommissions.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">

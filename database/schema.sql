@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   service       VARCHAR(120) NOT NULL,
   vehicle_make  VARCHAR(100),
   vehicle_color VARCHAR(60),
+  vin           VARCHAR(17),
   preferred_date DATE,
   notes         TEXT,
   status        ENUM('pending','confirmed','in_progress','completed','cancelled') NOT NULL DEFAULT 'pending',
@@ -151,6 +152,33 @@ CREATE TABLE IF NOT EXISTS commission_config (
   created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (seller_id) REFERENCES sellers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- ─── ROLES (custom RBAC) ─────────────────────────────────────
+CREATE TABLE IF NOT EXISTS roles (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name        VARCHAR(60)  NOT NULL UNIQUE,
+  description VARCHAR(200),
+  color       VARCHAR(20)  NOT NULL DEFAULT 'blue',
+  is_system   TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ─── ROLE PERMISSIONS ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS role_permissions (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  role_id     INT UNSIGNED NOT NULL,
+  module      VARCHAR(60)  NOT NULL,
+  can_view    TINYINT(1)   NOT NULL DEFAULT 0,
+  can_create  TINYINT(1)   NOT NULL DEFAULT 0,
+  can_edit    TINYINT(1)   NOT NULL DEFAULT 0,
+  can_delete  TINYINT(1)   NOT NULL DEFAULT 0,
+  UNIQUE KEY uq_role_module (role_id, module),
+  FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- role_id on users (links to custom roles)
+ALTER TABLE users ADD COLUMN role_id INT UNSIGNED NULL AFTER role;
+ALTER TABLE users ADD CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE SET NULL;
 
 -- ─── INDEXES ──────────────────────────────────────────────────
 CREATE INDEX idx_clients_phone     ON clients(phone);
