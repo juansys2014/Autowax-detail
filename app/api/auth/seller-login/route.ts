@@ -2,14 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { userQueries, sellerQueries } from '@/lib/queries'
 import { sign } from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'autowax-secret-2025'
-
 export async function POST(req: NextRequest) {
   try {
+    const JWT_SECRET = process.env.NEXTAUTH_SECRET
+    if (!JWT_SECRET) {
+      console.error('NEXTAUTH_SECRET is not set')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
+
     const { phone } = await req.json()
     if (!phone) return NextResponse.json({ error: 'Phone required' }, { status: 400 })
 
-    // Clean phone — keep digits only
     const cleanPhone = phone.replace(/\D/g, '')
 
     const user = await userQueries.findByPhone(cleanPhone)
@@ -24,7 +27,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Seller profile not found' }, { status: 401 })
     }
 
-    // Generate JWT token for PWA
     const token = sign(
       { userId: user.id, sellerId: seller.id, role: 'vendedor', name: user.name },
       JWT_SECRET,

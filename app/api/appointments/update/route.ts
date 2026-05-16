@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import mysql from 'mysql2/promise'
-
-const pool = mysql.createPool({
-  host:     process.env.DB_HOST     || 'localhost',
-  port:     parseInt(process.env.DB_PORT || '3306'),
-  user:     process.env.DB_USER     || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME     || 'autowax_db',
-})
+import { execute } from '@/lib/db'
+import { requireAdmin } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
+  const admin = await requireAdmin()
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await req.json()
     const { id, status, confirmed_by, service, preferred_date, time, vehicle_make, vehicle_color, vin, notes } = body
 
     const updates: string[] = []
-    const values: any[] = []
+    const values: unknown[] = []
 
     if (service        !== undefined) { updates.push('service = ?');        values.push(service) }
     if (preferred_date !== undefined) { updates.push('preferred_date = ?'); values.push(preferred_date || null) }
@@ -30,11 +26,10 @@ export async function POST(req: NextRequest) {
     if (updates.length === 0) return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
 
     values.push(id)
-    await pool.execute(`UPDATE appointments SET ${updates.join(', ')} WHERE id = ?`, values)
+    await execute(`UPDATE appointments SET ${updates.join(', ')} WHERE id = ?`, values)
 
     return NextResponse.json({ success: true })
-  } catch (err: any) {
-    console.error('UPDATE ERROR:', err.message, err.code)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

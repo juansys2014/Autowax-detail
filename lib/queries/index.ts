@@ -24,9 +24,11 @@ export const userQueries = {
     execute('INSERT INTO users (name, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?)',
       [data.name, data.email, data.phone, data.password_hash, data.role]),
 
-  update: (id: number, data: Partial<{ name: string; email: string; phone: string; role: string; active: number }>) => {
-    const fields = Object.keys(data).map(k => `${k} = ?`).join(', ')
-    const values = [...Object.values(data), id]
+  update: (id: number, data: Record<string, unknown>) => {
+    const ALLOWED = new Set(['name', 'email', 'phone', 'role', 'role_id', 'active', 'password_hash'])
+    const safe = Object.fromEntries(Object.entries(data).filter(([k]) => ALLOWED.has(k)))
+    const fields = Object.keys(safe).map(k => `${k} = ?`).join(', ')
+    const values = [...Object.values(safe), id]
     return execute(`UPDATE users SET ${fields} WHERE id = ?`, values)
   },
 
