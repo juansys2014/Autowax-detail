@@ -19,5 +19,6 @@
     ".git"
   ],
   "delay": 2500,
+  "runOnChangeOnly": true,
   "exec": "bash scripts/pm2-rebuild-restart.sh"
 }

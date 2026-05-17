@@ -8,7 +8,7 @@ module.exports = {
       name: 'autowax-watcher',
       cwd: __dirname,
       script: 'node_modules/.bin/nodemon',
-      args: '--config nodemon.watch.json',
+      args: '--config nodemon.watch.json --no-run-on-start',
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,

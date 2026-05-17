@@ -77,15 +77,16 @@ La app queda en `http://0.0.0.0:3011`.
 
 ### 2b. Watch: rebuild + restart al cambiar código
 
-PM2 solo con `watch: true` **no** hace `next build`. Usá el ecosystem con watcher:
+**Importante:** no uses `pm2 start ecosystem.watch.config.cjs` a pelo si no hay build. Usá:
 
 ```bash
 npm ci
-npm run build
-pm2 start ecosystem.watch.config.cjs
+npm run pm2:watch:start
 ```
 
-Al guardar cambios en `app/`, `components/`, `lib/`, etc. → `npm run build` → `pm2 restart autowax-detail` (espera ~2,5 s entre cambios).
+(Eso hace `build` y después levanta app + watcher.)
+
+Al guardar cambios en `app/`, `components/`, `lib/`, etc. → para la app → `build` → la vuelve a levantar (~2,5 s de espera).
 
 Detener app + watcher:
 
@@ -93,7 +94,7 @@ Detener app + watcher:
 pm2 stop autowax-detail autowax-watcher
 ```
 
-Rebuild manual sin esperar al watch:
+Rebuild manual:
 
 ```bash
 npm run pm2:rebuild
