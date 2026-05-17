@@ -1,0 +1,23 @@
+{
+  "watch": [
+    "app",
+    "components",
+    "lib",
+    "hooks",
+    "public",
+    "middleware.ts",
+    "next.config.mjs",
+    "postcss.config.mjs"
+  ],
+  "ext": "ts,tsx,js,mjs,cjs,css,json",
+  "ignore": [
+    ".next",
+    "node_modules",
+    "logs",
+    "database",
+    "*.conf",
+    ".git"
+  ],
+  "delay": 2500,
+  "exec": "bash scripts/pm2-rebuild-restart.sh"
+}

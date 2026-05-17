@@ -70,10 +70,34 @@ Si usás nginx con dominio HTTPS, poné el dominio real en ambas URLs (sin `:301
 ```bash
 npm ci
 npm run build
-npm run pm2:start
+pm2 start ecosystem.config.cjs
 ```
 
 La app queda en `http://0.0.0.0:3011`.
+
+### 2b. Watch: rebuild + restart al cambiar código
+
+PM2 solo con `watch: true` **no** hace `next build`. Usá el ecosystem con watcher:
+
+```bash
+npm ci
+npm run build
+pm2 start ecosystem.watch.config.cjs
+```
+
+Al guardar cambios en `app/`, `components/`, `lib/`, etc. → `npm run build` → `pm2 restart autowax-detail` (espera ~2,5 s entre cambios).
+
+Detener app + watcher:
+
+```bash
+pm2 stop autowax-detail autowax-watcher
+```
+
+Rebuild manual sin esperar al watch:
+
+```bash
+npm run pm2:rebuild
+```
 
 ### 3. Comandos útiles
 
