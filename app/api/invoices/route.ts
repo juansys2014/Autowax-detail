@@ -47,6 +47,18 @@ export async function POST(req: NextRequest) {
     })
     const invoiceId = result.insertId
 
+    // Save line items
+    for (const item of items) {
+      const lineTotal = Number(item.quantity) * Number(item.unit_price)
+      await invoiceQueries.createItem({
+        invoice_id:  invoiceId,
+        description: item.description,
+        quantity:    Number(item.quantity),
+        unit_price:  Number(item.unit_price),
+        total:       lineTotal,
+      })
+    }
+
     // Mark as paid immediately if paid_by provided
     if (paid_by) {
       await invoiceQueries.markPaid(invoiceId, paid_by)

@@ -82,6 +82,7 @@ export default function AppointmentsPage() {
   const [vinResult,      setVinResult]      = useState("")
   const [vinError,       setVinError]       = useState("")
   const [formError,      setFormError]      = useState("")
+  const [hoveredDate,    setHoveredDate]    = useState<string|null>(null)
   const searchTimeout = useRef<any>(null)
 
   const year        = currentDate.getFullYear()
@@ -321,16 +322,21 @@ export default function AppointmentsPage() {
                 const isToday    = key===todayStr
                 const isSelected = key===selectedDate
                 return (
-                  <button key={day} onClick={()=>setSelectedDate(isSelected?null:key)}
+                  <button key={day}
+                    onClick={()=>setSelectedDate(isSelected?null:key)}
+                    onMouseEnter={()=>apts.length>0?setHoveredDate(key):setHoveredDate(null)}
+                    onMouseLeave={()=>setHoveredDate(null)}
                     className={`h-12 rounded-lg p-1 flex flex-col items-center justify-start pt-1 gap-0.5 transition-colors
                       ${isSelected?'bg-[#4a8fe8]':isToday?'ring-2 ring-[#e8151a] hover:bg-[#2a2a2a]':'hover:bg-[#2a2a2a]'}`}>
                     <span className={`font-medium text-sm ${isSelected?'text-white':isToday?'text-[#e8151a]':'text-white'}`}>{day}</span>
                     {apts.length>0&&(
-                      <div className="flex flex-wrap justify-center gap-0.5">
-                        {apts.slice(0,4).map((a,j)=>(
-                          <div key={j} className={`w-1.5 h-1.5 rounded-full ${isSelected?'bg-white/70':STATUS_DOT[a.status]||'bg-gray-500'}`}/>
-                        ))}
-                        {apts.length>4&&<span className="text-[9px] text-gray-600">+{apts.length-4}</span>}
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className={`text-[10px] font-semibold leading-none ${isSelected?'text-white':'text-[#4a8fe8]'}`}>{apts.length}</span>
+                        <div className="flex justify-center gap-0.5">
+                          {apts.slice(0,3).map((a,j)=>(
+                            <div key={j} className={`w-1.5 h-1.5 rounded-full ${isSelected?'bg-white/70':STATUS_DOT[a.status]||'bg-gray-500'}`}/>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </button>
@@ -338,7 +344,33 @@ export default function AppointmentsPage() {
               })}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-[#2a2a2a] flex flex-wrap gap-4">
+            {/* hover summary */}
+            <div className="h-8 flex items-center px-1 mt-1">
+              {hoveredDate ? (()=>{
+                const apts = getAptsForKey(hoveredDate)
+                const counts: Record<string,number> = {}
+                apts.forEach(a=>{ counts[a.status]=(counts[a.status]||0)+1 })
+                const statusLabels: Record<string,string> = { confirmed:'✓ confirmed', pending:'⏳ pending', cancelled:'✗ cancelled', completed:'● completed' }
+                const statusColors: Record<string,string> = { confirmed:'text-green-400', pending:'text-yellow-400', cancelled:'text-red-400', completed:'text-[#4a8fe8]' }
+                const [,month,day] = hoveredDate.split('-').map(Number)
+                return (
+                  <span className="text-xs text-gray-300">
+                    <span className="font-medium">{MONTHS[month-1]} {day}</span>
+                    <span className="text-gray-500"> — </span>
+                    <span className="text-white font-medium">{apts.length} {apts.length===1?'appointment':'appointments'}</span>
+                    <span className="text-gray-500"> · </span>
+                    {Object.entries(counts).map(([s,n],i)=>(
+                      <span key={s}>
+                        {i>0&&<span className="text-gray-600"> · </span>}
+                        <span className={statusColors[s]||'text-gray-400'}>{n} {statusLabels[s]||s}</span>
+                      </span>
+                    ))}
+                  </span>
+                )
+              })() : <span className="text-xs text-gray-600">Hover a day to see summary</span>}
+            </div>
+
+            <div className="mt-2 pt-4 border-t border-[#2a2a2a] flex flex-wrap gap-4">
               {[['pending','Pending','bg-yellow-500'],['confirmed','Confirmed','bg-green-500'],['cancelled','Cancelled','bg-red-500'],['completed','Completed','bg-[#4a8fe8]']].map(([s,l,c])=>(
                 <div key={s} className="flex items-center gap-1.5">
                   <div className={`w-2 h-2 rounded-full ${c}`}/>

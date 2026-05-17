@@ -153,6 +153,30 @@ CREATE TABLE IF NOT EXISTS commission_config (
   FOREIGN KEY (seller_id) REFERENCES sellers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- ─── SERVICE CATALOG ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS service_catalog (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name        VARCHAR(120) NOT NULL,
+  category    ENUM('service','product') NOT NULL DEFAULT 'service',
+  price       DECIMAL(10,2) NOT NULL DEFAULT 0,
+  active      TINYINT(1) NOT NULL DEFAULT 1,
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ─── SERVICE PRICE HISTORY ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS service_price_history (
+  id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  service_id  INT UNSIGNED NOT NULL,
+  old_price   DECIMAL(10,2) NOT NULL,
+  new_price   DECIMAL(10,2) NOT NULL,
+  changed_by  INT UNSIGNED NOT NULL,
+  notes       TEXT,
+  changed_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (service_id) REFERENCES service_catalog(id) ON DELETE CASCADE,
+  FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
 -- ─── ROLES (custom RBAC) ─────────────────────────────────────
 CREATE TABLE IF NOT EXISTS roles (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

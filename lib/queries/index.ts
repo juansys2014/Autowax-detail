@@ -313,6 +313,12 @@ export const invoiceQueries = {
       [data.invoice_number, data.client_id, data.appointment_id || null,
        data.subtotal, data.tax, data.total, data.payment_method, data.notes || null]),
 
+  createItem: (data: { invoice_id: number; description: string; quantity: number; unit_price: number; total: number }) =>
+    execute(
+      'INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, total) VALUES (?, ?, ?, ?, ?)',
+      [data.invoice_id, data.description, data.quantity, data.unit_price, data.total]
+    ),
+
   markPaid: (id: number, paidBy: number) =>
     execute("UPDATE invoices SET status = 'paid', paid_at = NOW(), paid_by = ? WHERE id = ?", [paidBy, id]),
 

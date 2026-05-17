@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     // 2 — Generate unique QR code
     const qrCode = `SELLER_${String(userId).padStart(6, '0')}`
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const qrUrl   = `${baseUrl}/?ref=${qrCode}`
+    const qrUrl   = `${baseUrl}/book?ref=${qrCode}`
 
     // 3 — Generate QR image as base64
     const qrImage = await QRCode.toDataURL(qrUrl, {
