@@ -12,6 +12,10 @@ out/
 # PM2
 logs/
 
+# Apache vhost (server-specific)
+autowax.retailsolutionstimetracker.com.conf
+autowax.retailsolutionstimetracker.com.ssl.conf
+
 # misc
 .DS_Store
 *.pem
