@@ -286,17 +286,23 @@ export const invoiceQueries = {
     return query<any>(sql, values)
   },
 
-  findById: (id: number) =>
-    queryOne<any>(`
-      SELECT i.*, c.name AS client_name,
-        (SELECT JSON_ARRAYAGG(JSON_OBJECT(
-          'id', ii.id, 'description', ii.description,
-          'quantity', ii.quantity, 'unit_price', ii.unit_price, 'total', ii.total
-        )) FROM invoice_items ii WHERE ii.invoice_id = i.id) AS items
+  findById: async (id: number) => {
+    const invoice = await queryOne<any>(`
+      SELECT i.*, c.name AS client_name, c.phone AS client_phone,
+        su.name AS seller_name
       FROM invoices i
       JOIN clients c ON c.id = i.client_id
+      LEFT JOIN sellers s ON s.id = c.seller_id
+      LEFT JOIN users su ON su.id = s.user_id
       WHERE i.id = ?
-    `, [id]),
+    `, [id])
+    if (!invoice) return null
+    const items = await query<any>(
+      'SELECT id, description, quantity, unit_price, total FROM invoice_items WHERE invoice_id = ? ORDER BY id',
+      [id]
+    )
+    return { ...invoice, items }
+  },
 
   getNextNumber: async () => {
     const row = await queryOne<any>('SELECT MAX(CAST(SUBSTRING(invoice_number, 5) AS UNSIGNED)) AS last FROM invoices')

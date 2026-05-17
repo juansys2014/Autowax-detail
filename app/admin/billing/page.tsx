@@ -2,7 +2,7 @@
 
 import { formatPhone } from '@/lib/utils/format'
 import { useState, useEffect, useRef } from "react"
-import { Search, FileText, Plus, X, Check, DollarSign } from "lucide-react"
+import { Search, FileText, Plus, X, Check, DollarSign, Printer, Pencil, Trash2 } from "lucide-react"
 
 type Invoice = {
   id: number; invoice_number: string; client_name: string; client_phone: string
@@ -54,6 +54,17 @@ export default function BillingPage() {
   const [payMethod, setPayMethod] = useState("cash")
   const [notes, setNotes] = useState("")
   const [payModalMethod, setPayModalMethod] = useState("cash")
+
+  type InvoiceDetail = Invoice & { items?: {description:string;quantity:number;unit_price:number;total:number}[] }
+  const [showViewModal,   setShowViewModal]   = useState<InvoiceDetail | null>(null)
+  const [showEditModal,   setShowEditModal]   = useState<InvoiceDetail | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState<Invoice | null>(null)
+  const [editItems,       setEditItems]       = useState<LineItem[]>([emptyItem()])
+  const [editPayMethod,   setEditPayMethod]   = useState("cash")
+  const [editNotes,       setEditNotes]       = useState("")
+  const [deleting,        setDeleting]        = useState(false)
+  const [editError,       setEditError]       = useState("")
+  const [adminConfirm,    setAdminConfirm]    = useState<{action:'edit'|'delete', invoice:Invoice}|null>(null)
 
   useEffect(() => { loadData(); loadCatalog() }, [])
 
@@ -157,6 +168,77 @@ export default function BillingPage() {
       setShowModal(false); loadData()
     } catch { setError('Connection error') }
     setSaving(false)
+  }
+
+  async function openView(inv: Invoice) {
+    try {
+      const res = await fetch(`/api/invoices/${inv.id}`)
+      const data = await res.json()
+      setShowViewModal(data.invoice)
+    } catch { setShowViewModal(inv as any) }
+  }
+
+  async function openEdit(inv: Invoice) {
+    setEditError('')
+    try {
+      const res = await fetch(`/api/invoices/${inv.id}`)
+      if (!res.ok) { setEditError('Could not load invoice'); return }
+      const data = await res.json()
+      const detail = data.invoice
+      const raw = detail.items
+      const parsedItems: any[] = raw
+        ? (typeof raw === 'string' ? JSON.parse(raw) : raw)
+        : []
+      setEditItems(parsedItems.length > 0
+        ? parsedItems.map((i: any) => ({ description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price), showDrop: false }))
+        : [emptyItem()])
+      setEditPayMethod(detail.payment_method || 'cash')
+      setEditNotes(detail.notes || '')
+      setShowEditModal(detail)
+    } catch (e: any) {
+      setEditError(e?.message || 'Error loading invoice')
+    }
+  }
+
+  function handlePrint() {
+    const style = document.createElement('style')
+    style.id = '__invoice_print_style__'
+    style.innerHTML = [
+      '@media print {',
+      '  body * { visibility: hidden !important; }',
+      '  #print-invoice, #print-invoice * { visibility: visible !important; }',
+      '  #print-invoice { position: fixed; left: 0; top: 0; width: 100%; background: white; z-index: 99999; padding: 40px; box-sizing: border-box; }',
+      '  .no-print { display: none !important; }',
+      '}',
+    ].join(' ')
+    document.head.appendChild(style)
+    window.print()
+    setTimeout(() => document.getElementById('__invoice_print_style__')?.remove(), 1500)
+  }
+
+  async function handleEditSave() {
+    if (!showEditModal) return
+    if (editItems.some(i => !i.description || !i.unit_price)) { setEditError("Fill in all items"); return }
+    setEditError(''); setSaving(true)
+    try {
+      const res = await fetch(`/api/invoices/${showEditModal.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: editItems, payment_method: editPayMethod, notes: editNotes }),
+      })
+      if (res.ok) { setShowEditModal(null); loadData() }
+      else { const d = await res.json(); setEditError(d.error || 'Error') }
+    } catch { setEditError('Connection error') }
+    setSaving(false)
+  }
+
+  async function handleDelete() {
+    if (!showDeleteModal) return
+    setDeleting(true)
+    try {
+      await fetch(`/api/invoices/${showDeleteModal.id}`, { method: 'DELETE' })
+      setShowDeleteModal(null); loadData()
+    } catch {}
+    setDeleting(false)
   }
 
   async function handleMarkPaid(invoice: Invoice) {
@@ -317,13 +399,31 @@ export default function BillingPage() {
                         {inv.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      {inv.status === 'pending' && (
-                        <button onClick={() => { setShowPayModal(inv); setPayModalMethod('cash') }}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-lg text-xs font-medium transition-colors ml-auto">
-                          <DollarSign className="w-3 h-3" /> Mark Paid
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        {inv.status === 'pending' && (
+                          <button onClick={() => { setShowPayModal(inv); setPayModalMethod('cash') }}
+                            className="flex items-center gap-1 px-2 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-lg text-xs font-medium transition-colors">
+                            <DollarSign className="w-3 h-3" /> Pay
+                          </button>
+                        )}
+                        <button onClick={() => openView(inv)} title="View / Print"
+                          className="p-1.5 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors">
+                          <Printer className="w-4 h-4" />
                         </button>
-                      )}
+                        <button
+                          onClick={() => inv.status === 'paid' ? setAdminConfirm({action:'edit', invoice:inv}) : openEdit(inv)}
+                          title={inv.status === 'paid' ? 'Requiere autorización admin' : 'Edit'}
+                          className={`p-1.5 rounded-lg transition-colors ${inv.status==='paid' ? 'text-gray-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-[#4a8fe8] hover:bg-[#2a2a2a]'}`}>
+                          {inv.status === 'paid' ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> : <Pencil className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => inv.status === 'paid' ? setAdminConfirm({action:'delete', invoice:inv}) : setShowDeleteModal(inv)}
+                          title={inv.status === 'paid' ? 'Requiere autorización admin' : 'Delete'}
+                          className={`p-1.5 rounded-lg transition-colors ${inv.status==='paid' ? 'text-gray-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a]'}`}>
+                          {inv.status === 'paid' ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> : <Trash2 className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -558,6 +658,202 @@ export default function BillingPage() {
               <button onClick={() => handleMarkPaid(showPayModal)} disabled={saving}
                 className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2">
                 {saving ? 'Processing...' : <><Check className="w-4 h-4" />Confirm Payment</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW / PRINT MODAL */}
+      {showViewModal && (
+        <div className="fixed inset-0 bg-black/75 flex items-start justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-lg my-4 text-black" id="print-invoice">
+            <div className="flex items-center justify-between p-6 border-b no-print">
+              <h3 className="font-bold text-lg">Invoice {showViewModal.invoice_number}</h3>
+              <div className="flex gap-2">
+                <button onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#1e1e1e] text-white rounded-lg text-sm font-medium hover:bg-[#2a2a2a] no-print">
+                  <Printer className="w-4 h-4" /> Print
+                </button>
+                <button onClick={() => setShowViewModal(null)} className="text-gray-400 hover:text-black no-print"><X className="w-5 h-5" /></button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-2xl font-black text-[#e8151a]">AUTO WAX</p>
+                  <p className="text-xs text-gray-500">South Florida</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-lg">{showViewModal.invoice_number}</p>
+                  <p className="text-xs text-gray-500">{new Date(showViewModal.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</p>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${showViewModal.status==='paid'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}`}>
+                    {showViewModal.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-0.5">Client</p>
+                <p className="font-semibold">{showViewModal.client_name}</p>
+                {showViewModal.client_phone && <p className="text-sm text-gray-500">{showViewModal.client_phone}</p>}
+              </div>
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-gray-200">
+                  <th className="text-left py-2 text-gray-500 font-medium">Description</th>
+                  <th className="text-center py-2 text-gray-500 font-medium">Qty</th>
+                  <th className="text-right py-2 text-gray-500 font-medium">Price</th>
+                  <th className="text-right py-2 text-gray-500 font-medium">Total</th>
+                </tr></thead>
+                <tbody>
+                  {showViewModal.items && (typeof showViewModal.items === 'string' ? JSON.parse(showViewModal.items) : showViewModal.items).map((item: any, i: number) => (
+                    <tr key={i} className="border-b border-gray-100">
+                      <td className="py-2">{item.description}</td>
+                      <td className="py-2 text-center">{item.quantity}</td>
+                      <td className="py-2 text-right">${Number(item.unit_price).toFixed(2)}</td>
+                      <td className="py-2 text-right font-medium">${Number(item.total).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="flex justify-between items-center border-t border-gray-200 pt-3">
+                <div className="text-sm text-gray-500">
+                  Payment: <span className="capitalize font-medium text-black">{showViewModal.payment_method}</span>
+                  {showViewModal.seller_name && <span className="ml-3">Ref: <span className="font-medium text-black">{showViewModal.seller_name}</span></span>}
+                </div>
+                <p className="text-xl font-black">Total: ${Number(showViewModal.total).toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/75 flex items-start justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl w-full max-w-2xl my-4">
+            <div className="flex items-center justify-between p-6 border-b border-[#2a2a2a]">
+              <h3 className="font-bold text-white">Edit {showEditModal.invoice_number}</h3>
+              <button onClick={() => setShowEditModal(null)} className="text-gray-400 hover:text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-300">Services & Products</label>
+                {editItems.map((item, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-2 items-start">
+                    <div className="col-span-6 relative">
+                      <input value={item.description}
+                        onChange={e => setEditItems(prev => prev.map((it,idx) => idx===i?{...it,description:e.target.value}:it))}
+                        onFocus={() => setEditItems(prev => prev.map((it,idx) => idx===i?{...it,showDrop:true}:it))}
+                        onBlur={() => setTimeout(() => setEditItems(prev => prev.map((it,idx) => idx===i?{...it,showDrop:false}:it)), 150)}
+                        placeholder="Service or product..."
+                        className="w-full px-3 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-[#4a8fe8] text-sm" />
+                      {item.showDrop && (
+                        <div className="absolute z-20 w-full mt-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg shadow-xl max-h-40 overflow-y-auto">
+                          {filteredCatalog(item.description).length === 0
+                            ? <p className="px-4 py-3 text-gray-500 text-sm">No items</p>
+                            : filteredCatalog(item.description).map(c => (
+                              <button key={c.id} onMouseDown={() => setEditItems(prev => prev.map((it,idx) => idx===i?{...it,description:c.name,unit_price:c.price,showDrop:false}:it))}
+                                className="w-full flex items-center justify-between px-4 py-2 hover:bg-[#2a2a2a] text-left border-b border-[#222] last:border-0">
+                                <span className="text-white text-sm">{c.name}</span>
+                                <span className="text-[#4a8fe8] text-sm">${Number(c.price).toFixed(2)}</span>
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                    <input type="number" min="1" value={item.quantity}
+                      onChange={e => setEditItems(prev => prev.map((it,idx) => idx===i?{...it,quantity:Number(e.target.value)}:it))}
+                      className="col-span-2 px-3 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-[#4a8fe8] text-sm text-center" />
+                    <div className="col-span-3 relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                      <input type="number" min="0" step="0.01" value={item.unit_price || ""}
+                        onChange={e => setEditItems(prev => prev.map((it,idx) => idx===i?{...it,unit_price:Number(e.target.value)}:it))}
+                        className="w-full pl-7 pr-3 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-[#4a8fe8] text-sm" />
+                    </div>
+                    <button onClick={() => setEditItems(prev => prev.filter((_,idx) => idx!==i))} className="col-span-1 py-2.5 text-gray-500 hover:text-red-400 flex justify-center"><X className="w-4 h-4" /></button>
+                  </div>
+                ))}
+                <button onClick={() => setEditItems(prev => [...prev, emptyItem()])} className="text-xs text-[#4a8fe8] hover:underline">+ Add item</button>
+                <div className="flex justify-end border-t border-[#2a2a2a] pt-2">
+                  <p className="text-sm text-gray-400">Total: <span className="text-white font-bold text-lg ml-2">${editItems.reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_price),0).toFixed(2)}</span></p>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Payment Method</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {PAY_METHODS.map(m => (
+                    <button key={m.value} onClick={() => setEditPayMethod(m.value)}
+                      className={`flex flex-col items-center gap-1 py-2 rounded-lg border text-sm transition-colors ${editPayMethod===m.value?'border-[#e8151a] bg-[#e8151a]/10 text-white':'border-[#2a2a2a] text-gray-400 hover:border-[#3a3a3a]'}`}>
+                      <span>{m.icon}</span><span className="text-xs">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={2} placeholder="Notes..."
+                className="w-full px-4 py-3 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-[#4a8fe8] text-sm resize-none" />
+              {editError && <p className="text-sm text-red-400">{editError}</p>}
+            </div>
+            <div className="flex gap-3 p-6 border-t border-[#2a2a2a]">
+              <button onClick={() => setShowEditModal(null)} className="px-4 py-3 border border-[#2a2a2a] text-gray-400 hover:text-white rounded-lg text-sm">Cancel</button>
+              <button onClick={handleEditSave} disabled={saving}
+                className="flex-1 py-3 bg-[#4a8fe8] hover:bg-[#3a7fd8] disabled:opacity-50 text-white rounded-lg text-sm font-bold">
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADMIN OVERRIDE CONFIRM */}
+      {adminConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1e1e1e] border border-yellow-500/40 rounded-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Autorización de admin</h3>
+                <p className="text-xs text-gray-400">Invoice pagado — acción restringida</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-300">
+              <span className="text-white font-medium">{adminConfirm.invoice.invoice_number}</span> ya fue pagado.{' '}
+              {adminConfirm.action === 'edit' ? '¿Querés editarlo de todas formas?' : '¿Querés borrarlo de todas formas?'}
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setAdminConfirm(null)}
+                className="flex-1 py-2.5 border border-[#2a2a2a] text-gray-400 hover:text-white rounded-lg text-sm">
+                Cancelar
+              </button>
+              <button onClick={() => {
+                  const inv = adminConfirm.invoice
+                  setAdminConfirm(null)
+                  if (adminConfirm.action === 'edit') openEdit(inv)
+                  else setShowDeleteModal(inv)
+                }}
+                className="flex-1 py-2.5 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-300 rounded-lg text-sm font-bold">
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRM MODAL */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="font-bold text-white">Delete Invoice</h3>
+            <p className="text-gray-400 text-sm">
+              Are you sure you want to delete <span className="text-white font-medium">{showDeleteModal.invoice_number}</span> for <span className="text-white font-medium">{showDeleteModal.client_name}</span>?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteModal(null)} className="flex-1 py-3 border border-[#2a2a2a] text-gray-400 hover:text-white rounded-lg text-sm">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-sm font-bold">
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
