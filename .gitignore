@@ -8,6 +8,9 @@ out/
 # environment variables (contains DB credentials — never commit)
 .env.local
 .env*.local
+.env
+# PM2
+logs/
 
 # misc
 .DS_Store

@@ -46,6 +46,63 @@ npm install
 npm run dev
 ```
 
+---
+
+## Producción con PM2 (puerto 3011)
+
+Requisito global: [PM2](https://pm2.keymetrics.io/) (`npm install -g pm2`).
+
+### 1. Variables de entorno en el servidor
+
+En `.env.local` (o el archivo que uses en prod), las URLs deben coincidir con cómo accedés a la app:
+
+```env
+NEXTAUTH_URL=http://TU_SERVIDOR:3011
+NEXT_PUBLIC_BASE_URL=http://TU_SERVIDOR:3011
+PORT=3011
+NODE_ENV=production
+```
+
+Si usás nginx con dominio HTTPS, poné el dominio real en ambas URLs (sin `:3011` si el proxy escucha en 443).
+
+### 2. Build y arranque
+
+```bash
+npm ci
+npm run build
+npm run pm2:start
+```
+
+La app queda en `http://0.0.0.0:3011`.
+
+### 3. Comandos útiles
+
+| Comando | Acción |
+|---------|--------|
+| `npm run pm2:logs` | Ver logs en vivo |
+| `npm run pm2:restart` | Reiniciar proceso |
+| `npm run pm2:reload` | Reload sin downtime |
+| `npm run pm2:stop` | Detener |
+| `npm run pm2:delete` | Sacar de PM2 |
+
+### 4. Persistir tras reinicio del servidor
+
+```bash
+pm2 save
+pm2 startup
+# Ejecutá el comando que PM2 imprime (sudo ...)
+```
+
+### 5. Cambiar el puerto
+
+Editá `PORT` y el argumento `-p` en `ecosystem.config.cjs`, o pasá otro puerto al script:
+
+```bash
+PORT=3020 pm2 start ecosystem.config.cjs --update-env
+```
+
+(En ese caso actualizá también `args` en el ecosystem o usá `npm run start:prod` con `PORT` en el env.)
+
 ### 4. Acceder al sistema
 
 | URL | Descripción |

@@ -6,6 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:prod": "next start -p 3011 -H 0.0.0.0",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop autowax-detail",
+    "pm2:restart": "pm2 restart autowax-detail",
+    "pm2:reload": "pm2 reload autowax-detail",
+    "pm2:delete": "pm2 delete autowax-detail",
+    "pm2:logs": "pm2 logs autowax-detail",
     "lint": "eslint ."
   },
   "dependencies": {
