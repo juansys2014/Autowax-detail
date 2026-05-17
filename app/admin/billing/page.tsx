@@ -414,14 +414,14 @@ export default function BillingPage() {
                         <button
                           onClick={() => inv.status === 'paid' ? setAdminConfirm({action:'edit', invoice:inv}) : openEdit(inv)}
                           title={inv.status === 'paid' ? 'Requiere autorización admin' : 'Edit'}
-                          className={`p-1.5 rounded-lg transition-colors ${inv.status==='paid' ? 'text-gray-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-[#4a8fe8] hover:bg-[#2a2a2a]'}`}>
-                          {inv.status === 'paid' ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> : <Pencil className="w-4 h-4" />}
+                          className={`p-1.5 rounded-lg transition-colors ${inv.status==='paid' ? 'text-yellow-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-[#4a8fe8] hover:bg-[#2a2a2a]'}`}>
+                          <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => inv.status === 'paid' ? setAdminConfirm({action:'delete', invoice:inv}) : setShowDeleteModal(inv)}
                           title={inv.status === 'paid' ? 'Requiere autorización admin' : 'Delete'}
-                          className={`p-1.5 rounded-lg transition-colors ${inv.status==='paid' ? 'text-gray-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a]'}`}>
-                          {inv.status === 'paid' ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> : <Trash2 className="w-4 h-4" />}
+                          className={`p-1.5 rounded-lg transition-colors ${inv.status==='paid' ? 'text-yellow-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a]'}`}>
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
