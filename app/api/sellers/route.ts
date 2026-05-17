@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sellerQueries, userQueries } from '@/lib/queries'
+import { requireAdmin } from '@/lib/auth'
 import QRCode from 'qrcode'
 
 export async function GET() {
+  const admin = await requireAdmin()
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const sellers = await sellerQueries.findAll()
     return NextResponse.json({ sellers })
   } catch (err: any) {
-    console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Sellers GET error:', err.message)
+    const detail = process.env.NODE_ENV !== 'production' ? err.message : undefined
+    return NextResponse.json({ error: 'Internal server error', detail }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const admin = await requireAdmin()
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await req.json()
     const { name, phone, commission_type, commission_value } = body
@@ -48,7 +56,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, qr_code: qrCode, qr_url: qrUrl, qr_image: qrImage })
   } catch (err: any) {
-    console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Sellers POST error:', err.message)
+    if (err.code === 'ER_DUP_ENTRY') {
+      return NextResponse.json({ error: 'Phone number is already in use' }, { status: 409 })
+    }
+    const detail = process.env.NODE_ENV !== 'production' ? err.message : undefined
+    return NextResponse.json({ error: 'Internal server error', detail }, { status: 500 })
   }
 }

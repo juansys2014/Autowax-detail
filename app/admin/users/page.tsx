@@ -358,6 +358,8 @@ export default function UsersPage() {
                         <TableCell>
                           {u.role_name ? (
                             <Badge variant="outline" className={`${c.border} ${c.bg} ${c.text}`}>{u.role_name}</Badge>
+                          ) : u.role_id ? (
+                            <Badge variant="outline" className="border-yellow-400 bg-yellow-50 text-yellow-700 text-xs">⚠ Rol #{u.role_id} no encontrado</Badge>
                           ) : (
                             <span className="text-xs text-muted-foreground capitalize">{u.role}</span>
                           )}

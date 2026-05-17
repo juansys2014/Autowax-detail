@@ -20,9 +20,9 @@ export const userQueries = {
       ORDER BY u.created_at DESC
     `),
 
-  create: (data: { name: string; email?: string; phone?: string; password_hash?: string; role: string }) =>
+  create: (data: { name: string; email?: string | null; phone?: string | null; password_hash?: string | null; role: string }) =>
     execute('INSERT INTO users (name, email, phone, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-      [data.name, data.email, data.phone, data.password_hash, data.role]),
+      [data.name, data.email ?? null, data.phone ?? null, data.password_hash ?? null, data.role]),
 
   update: (id: number, data: Record<string, unknown>) => {
     const ALLOWED = new Set(['name', 'email', 'phone', 'role', 'role_id', 'active', 'password_hash'])

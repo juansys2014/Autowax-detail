@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sellerQueries } from '@/lib/queries'
 import QRCode from 'qrcode'
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const seller = await sellerQueries.findById(parseInt(params.id))
+    const { id: rawId } = await params
+    const seller = await sellerQueries.findById(parseInt(rawId))
     if (!seller) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     const qrImage = await QRCode.toDataURL(seller.qr_url, {
       errorCorrectionLevel: 'M', margin: 2, width: 400,
@@ -16,9 +17,10 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id   = parseInt(params.id)
+    const { id: rawId } = await params
+    const id = parseInt(rawId)
     const body = await req.json()
     const { name, phone, email, commission_type, commission_value, active, device_token } = body
 

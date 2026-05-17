@@ -47,6 +47,7 @@ export default function SellersPage() {
   const [loading, setLoading]         = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [saving, setSaving]           = useState(false)
+  const [saveError, setSaveError]     = useState<string | null>(null)
 
   // Modals
   const [showAdd, setShowAdd]         = useState(false)
@@ -103,6 +104,7 @@ export default function SellersPage() {
   async function handleAdd() {
     if (!newSeller.name || !newSeller.phone) return
     setSaving(true)
+    setSaveError(null)
     try {
       const res = await fetch('/api/sellers', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -117,8 +119,13 @@ export default function SellersPage() {
         setShowAdd(false)
         setNewSeller({ name:'', phone:'', email:'', commissionType:'percent', commissionValue:10 })
         await loadSellers()
+      } else {
+        const data = await res.json()
+        setSaveError(data.detail || data.error || 'Error al guardar')
       }
-    } catch {}
+    } catch (e: any) {
+      setSaveError(e.message || 'Error de red')
+    }
     setSaving(false)
   }
 
@@ -176,7 +183,7 @@ export default function SellersPage() {
             className="border-[#2a2a2a] text-gray-300 hover:text-white gap-2">
             <Smartphone className="w-4 h-4"/> Seller Login QR
           </Button>
-          <Button onClick={() => setShowAdd(true)} className="bg-primary hover:bg-primary/90">
+          <Button onClick={() => { setShowAdd(true); setSaveError(null) }} className="bg-primary hover:bg-primary/90">
             <Plus className="mr-2 h-4 w-4"/> Add Seller
           </Button>
         </div>
@@ -317,6 +324,9 @@ export default function SellersPage() {
               </div>
             </div>
           </div>
+          {saveError && (
+            <p className="text-sm text-red-500 px-1 pb-1">{saveError}</p>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAdd(false)} className="border-border">Cancel</Button>
             <Button onClick={handleAdd} disabled={saving || !newSeller.name || !newSeller.phone}
