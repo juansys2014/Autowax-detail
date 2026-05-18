@@ -69,8 +69,8 @@ export default function SellersPage() {
   })
 
   const loginQRUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/login?tab=seller`
-    : '/login?tab=seller'
+    ? `${window.location.origin}/seller-login`
+    : '/seller-login'
 
   useEffect(() => { loadSellers() }, [])
 
