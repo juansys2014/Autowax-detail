@@ -13,25 +13,26 @@ import {
   Shield,
   Settings,
   Menu,
-  X,
   ChevronLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-
-const sidebarItems = [
-  { name: "Appointments", href: "/admin/appointments", icon: Calendar },
-  { name: "Clients", href: "/admin/clients", icon: Users },
-  { name: "Sellers", href: "/admin/sellers", icon: UserCheck },
-  { name: "Commissions", href: "/admin/commissions", icon: DollarSign },
-  { name: "Billing / Invoices", href: "/admin/billing", icon: FileText },
-  { name: "Users & Permissions", href: "/admin/users", icon: Shield },
-  { name: "Catalog & Prices", href: "/admin/catalog", icon: FileText },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-]
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { useLanguage } from "@/lib/language-context"
 
 function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; onCollapse?: () => void }) {
   const pathname = usePathname()
+  const { t } = useLanguage()
+
+  const sidebarItems = [
+    { name: t.admin.sidebar.appointments, href: "/admin/appointments", icon: Calendar },
+    { name: t.admin.sidebar.clients,      href: "/admin/clients",      icon: Users },
+    { name: t.admin.sidebar.sellers,      href: "/admin/sellers",      icon: UserCheck },
+    { name: t.admin.sidebar.commissions,  href: "/admin/commissions",  icon: DollarSign },
+    { name: t.admin.sidebar.billing,      href: "/admin/billing",      icon: FileText },
+    { name: t.admin.sidebar.users,        href: "/admin/users",        icon: Shield },
+    { name: t.admin.sidebar.catalog,      href: "/admin/catalog",      icon: FileText },
+    { name: t.admin.sidebar.settings,     href: "/admin/settings",     icon: Settings },
+  ]
 
   return (
     <div className="flex h-full flex-col bg-[#1e1e1e]">
@@ -68,7 +69,7 @@ function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; onColla
           const isActive = pathname === item.href || (item.href !== "/admin/appointments" && pathname.startsWith(item.href))
           return (
             <Link
-              key={item.name}
+              key={item.href}
               href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
@@ -96,7 +97,7 @@ function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; onColla
           )}
         >
           <ChevronLeft className="h-5 w-5" />
-          {!collapsed && <span>Back to Site</span>}
+          {!collapsed && <span>{t.admin.sidebar.backToSite}</span>}
         </Link>
       </div>
     </div>
@@ -106,6 +107,7 @@ function SidebarContent({ collapsed, onCollapse }: { collapsed: boolean; onColla
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { lang, setLang, t } = useLanguage()
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -148,10 +150,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
+            {/* Language Toggle */}
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setLang("EN")}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  lang === "EN" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLang("ES")}
+                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                  lang === "ES" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                ES
+              </button>
+            </div>
+
             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
               <span className="text-xs font-medium text-primary">AD</span>
             </div>
-            <span className="hidden text-sm font-medium sm:inline text-white">Admin</span>
+            <span className="hidden text-sm font-medium sm:inline text-white">{t.admin.header.admin}</span>
             <button
               onClick={() => {
                 document.cookie = "admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
@@ -162,7 +184,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              Logout
+              {t.admin.header.logout}
             </button>
           </div>
         </header>

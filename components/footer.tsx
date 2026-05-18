@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
 
 const InstagramIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -21,28 +24,15 @@ const YoutubeIcon = () => (
   </svg>
 )
 
-const services = [
-  { label: "Professional Detailing", href: "#services" },
-  { label: "Ceramic Coating", href: "#services" },
-  { label: "Paint Correction", href: "#services" },
-  { label: "Ozone Treatment", href: "#services" },
-  { label: "Window Tint", href: "#services" },
-]
-
-const company = [
-  { label: "About Us", href: "#why-us" },
-  { label: "Reviews", href: "#reviews" },
-  { label: "Contact", href: "#contact" },
-  { label: "Book Now", href: "#contact" },
-]
-
 const socials = [
   { icon: <InstagramIcon />, href: "#", label: "Instagram" },
-  { icon: <FacebookIcon />, href: "#", label: "Facebook" },
-  { icon: <YoutubeIcon />, href: "#", label: "YouTube" },
+  { icon: <FacebookIcon />,  href: "#", label: "Facebook" },
+  { icon: <YoutubeIcon />,   href: "#", label: "YouTube" },
 ]
 
 export function Footer() {
+  const { t } = useLanguage()
+
   return (
     <footer className="bg-background border-t border-border py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,10 +45,7 @@ export function Footer() {
               </div>
               <span className="font-heading text-white text-lg">AUTO WAX</span>
             </Link>
-            <p className="text-muted-foreground mb-6">
-              Premium automotive detailing services in South Florida. Transform your vehicle with our expert care.
-            </p>
-            {/* Social Links */}
+            <p className="text-muted-foreground mb-6">{t.footer.tagline}</p>
             <div className="flex items-center gap-4">
               {socials.map((social) => (
                 <a
@@ -75,14 +62,11 @@ export function Footer() {
 
           {/* Services */}
           <div>
-            <h4 className="font-heading text-white mb-4">Services</h4>
+            <h4 className="font-heading text-white mb-4">{t.footer.servicesTitle}</h4>
             <ul className="space-y-3">
-              {services.map((item) => (
+              {t.footer.services.map((item) => (
                 <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="text-muted-foreground hover:text-white transition-colors"
-                  >
+                  <Link href={item.href} className="text-muted-foreground hover:text-white transition-colors">
                     {item.label}
                   </Link>
                 </li>
@@ -92,14 +76,11 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="font-heading text-white mb-4">Company</h4>
+            <h4 className="font-heading text-white mb-4">{t.footer.companyTitle}</h4>
             <ul className="space-y-3">
-              {company.map((item) => (
+              {t.footer.company.map((item) => (
                 <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="text-muted-foreground hover:text-white transition-colors"
-                  >
+                  <Link href={item.href} className="text-muted-foreground hover:text-white transition-colors">
                     {item.label}
                   </Link>
                 </li>
@@ -109,10 +90,8 @@ export function Footer() {
 
           {/* Follow Us */}
           <div>
-            <h4 className="font-heading text-white mb-4">Follow Us</h4>
-            <p className="text-muted-foreground mb-4">
-              Stay updated with our latest work and special offers.
-            </p>
+            <h4 className="font-heading text-white mb-4">{t.footer.followTitle}</h4>
+            <p className="text-muted-foreground mb-4">{t.footer.followDesc}</p>
             <div className="flex flex-col gap-3">
               {socials.map((social) => (
                 <a
@@ -128,18 +107,13 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} Auto Wax South Florida. All rights reserved.
+            &copy; {new Date().getFullYear()} Auto Wax South Florida. {t.footer.rights}
           </p>
           <div className="flex items-center gap-6 text-sm">
-            <Link href="#" className="text-muted-foreground hover:text-white transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:text-white transition-colors">
-              Terms of Service
-            </Link>
+            <Link href="#" className="text-muted-foreground hover:text-white transition-colors">{t.footer.privacy}</Link>
+            <Link href="#" className="text-muted-foreground hover:text-white transition-colors">{t.footer.terms}</Link>
           </div>
         </div>
       </div>

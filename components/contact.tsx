@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useLanguage } from "@/lib/language-context"
 
 const PhoneIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-royal">
@@ -31,30 +32,16 @@ const ClockIcon = () => (
   </svg>
 )
 
-const services = [
-  "Professional Detailing",
-  "Paint Correction & Ceramic Coating",
-  "Paint & Fabric Protection",
-  "Ozone Treatment",
-  "Headlight Restoration",
-  "Window Tint & PPF",
-]
-
-const contactInfo = [
-  { icon: <PhoneIcon />, label: "Phone", value: "(561) 555-0123" },
-  { icon: <MailIcon />, label: "Email", value: "info@autowaxsfl.com" },
-  { icon: <MapPinIcon />, label: "Address", value: "Royal Palm Beach, FL 33411" },
-  { icon: <ClockIcon />, label: "Hours", value: "Mon-Sat: 8AM - 6PM" },
-]
-
 export function Contact() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    service: "",
-    message: "",
-  })
+  const { t } = useLanguage()
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "", service: "", message: "" })
+
+  const contactInfo = [
+    { icon: <PhoneIcon />, label: t.contact.contactLabels.phone, value: "(561) 555-0123" },
+    { icon: <MailIcon />,  label: t.contact.contactLabels.email, value: "info@autowaxsfl.com" },
+    { icon: <MapPinIcon />, label: t.contact.contactLabels.address, value: "Royal Palm Beach, FL 33411" },
+    { icon: <ClockIcon />, label: t.contact.contactLabels.hours, value: "Mon-Sat: 8AM - 6PM" },
+  ]
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,24 +51,16 @@ export function Contact() {
   return (
     <section id="contact" className="py-20 sm:py-32 bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="text-center mb-16">
-          <p className="font-condensed text-royal uppercase tracking-widest text-sm mb-4">Get In Touch</p>
-          <h2 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-white mb-6">
-            Contact Us
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-            Have questions or ready to book? Reach out to us and we&apos;ll get back to you promptly.
-          </p>
+          <p className="font-condensed text-royal uppercase tracking-widest text-sm mb-4">{t.contact.label}</p>
+          <h2 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-white mb-6">{t.contact.title}</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">{t.contact.description}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
           {/* Contact Info */}
           <div>
-            <h3 className="font-heading text-2xl text-white mb-8">
-              Contact Information
-            </h3>
-            
+            <h3 className="font-heading text-2xl text-white mb-8">{t.contact.infoTitle}</h3>
             <div className="space-y-6 mb-10">
               {contactInfo.map((item, index) => (
                 <div key={index} className="flex items-center gap-4">
@@ -89,18 +68,13 @@ export function Contact() {
                     {item.icon}
                   </div>
                   <div>
-                    <p className="font-condensed text-muted-foreground text-sm uppercase tracking-wide">
-                      {item.label}
-                    </p>
-                    <p className="text-white">
-                      {item.value}
-                    </p>
+                    <p className="font-condensed text-muted-foreground text-sm uppercase tracking-wide">{item.label}</p>
+                    <p className="text-white">{item.value}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Map placeholder */}
             <div className="bg-background rounded-2xl h-64 flex items-center justify-center border border-border">
               <div className="text-center">
                 <MapPinIcon />
@@ -111,32 +85,30 @@ export function Contact() {
 
           {/* Contact Form */}
           <div className="bg-background border border-border rounded-2xl p-6 sm:p-8">
-            <h3 className="font-heading text-2xl text-white mb-6">
-              Send Us a Message
-            </h3>
-            
+            <h3 className="font-heading text-2xl text-white mb-6">{t.contact.formTitle}</h3>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="font-condensed text-sm text-muted-foreground uppercase tracking-wide block mb-2">
-                  Name
+                  {t.contact.form.name}
                 </label>
                 <Input
                   type="text"
-                  placeholder="Your name"
+                  placeholder={t.contact.form.namePlaceholder}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="bg-card border-border text-white placeholder:text-muted-foreground"
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="font-condensed text-sm text-muted-foreground uppercase tracking-wide block mb-2">
-                    Email
+                    {t.contact.form.email}
                   </label>
                   <Input
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder={t.contact.form.emailPlaceholder}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="bg-card border-border text-white placeholder:text-muted-foreground"
@@ -144,54 +116,52 @@ export function Contact() {
                 </div>
                 <div>
                   <label className="font-condensed text-sm text-muted-foreground uppercase tracking-wide block mb-2">
-                    Phone
+                    {t.contact.form.phone}
                   </label>
                   <Input
                     type="tel"
-                    placeholder="(555) 000-0000"
+                    placeholder={t.contact.form.phonePlaceholder}
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="bg-card border-border text-white placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="font-condensed text-sm text-muted-foreground uppercase tracking-wide block mb-2">
-                  Service
+                  {t.contact.form.service}
                 </label>
                 <select
                   value={formData.service}
                   onChange={(e) => setFormData({ ...formData, service: e.target.value })}
                   className="w-full h-10 px-3 rounded-md bg-card border border-border text-white"
                 >
-                  <option value="" className="bg-card">Select a service</option>
-                  {services.map((service) => (
-                    <option key={service} value={service} className="bg-card">
-                      {service}
-                    </option>
+                  <option value="" className="bg-card">{t.contact.form.servicePlaceholder}</option>
+                  {t.contact.services.map((service) => (
+                    <option key={service} value={service} className="bg-card">{service}</option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="font-condensed text-sm text-muted-foreground uppercase tracking-wide block mb-2">
-                  Message
+                  {t.contact.form.message}
                 </label>
                 <textarea
                   rows={4}
-                  placeholder="Tell us about your vehicle and what services you&apos;re interested in..."
+                  placeholder={t.contact.form.messagePlaceholder}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   className="w-full px-3 py-2 rounded-md bg-card border border-border text-white placeholder:text-muted-foreground resize-none"
                 />
               </div>
-              
-              <Button 
+
+              <Button
                 type="submit"
                 className="w-full bg-brand-red hover:bg-brand-red/90 text-white font-condensed uppercase tracking-wide py-6"
               >
-                Send Message
+                {t.contact.form.submit}
               </Button>
             </form>
           </div>

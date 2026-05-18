@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/lib/language-context"
 
 const MenuIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -19,16 +20,37 @@ const CloseIcon = () => (
   </svg>
 )
 
-const navLinks = [
-  { href: "#services", label: "Services" },
-  { href: "#why-us", label: "Why Us" },
-  { href: "#reviews", label: "Reviews" },
-  { href: "#contact", label: "Contact" },
-]
-
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [language, setLanguage] = useState<"EN" | "ES">("EN")
+  const { lang, setLang, t } = useLanguage()
+
+  const navLinks = [
+    { href: "#services", label: t.nav.services },
+    { href: "#why-us",   label: t.nav.whyUs },
+    { href: "#reviews",  label: t.nav.reviews },
+    { href: "#contact",  label: t.nav.contact },
+  ]
+
+  const LangToggle = () => (
+    <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+      <button
+        onClick={() => setLang("EN")}
+        className={`px-3 py-1 rounded text-sm font-condensed transition-colors ${
+          lang === "EN" ? "bg-royal text-white" : "text-muted-foreground hover:text-white"
+        }`}
+      >
+        EN
+      </button>
+      <button
+        onClick={() => setLang("ES")}
+        className={`px-3 py-1 rounded text-sm font-condensed transition-colors ${
+          lang === "ES" ? "bg-royal text-white" : "text-muted-foreground hover:text-white"
+        }`}
+      >
+        ES
+      </button>
+    </div>
+  )
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -58,40 +80,22 @@ export function Navbar() {
               href="/login"
               className="font-condensed text-muted-foreground hover:text-white transition-colors uppercase tracking-wide text-sm"
             >
-              Staff Login
+              {t.nav.staffLogin}
             </Link>
           </div>
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            {/* Language Toggle */}
-            <div className="hidden sm:flex items-center gap-1 bg-muted rounded-lg p-1">
-              <button
-                onClick={() => setLanguage("EN")}
-                className={`px-3 py-1 rounded text-sm font-condensed transition-colors ${
-                  language === "EN" ? "bg-royal text-white" : "text-muted-foreground hover:text-white"
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage("ES")}
-                className={`px-3 py-1 rounded text-sm font-condensed transition-colors ${
-                  language === "ES" ? "bg-royal text-white" : "text-muted-foreground hover:text-white"
-                }`}
-              >
-                ES
-              </button>
+            <div className="hidden sm:flex">
+              <LangToggle />
             </div>
 
-            {/* Book Now Button */}
             <Link href="/book">
               <Button className="bg-brand-red hover:bg-brand-red/90 text-white font-condensed uppercase tracking-wide">
-                Book Now
+                {t.nav.bookNow}
               </Button>
             </Link>
 
-            {/* Mobile Menu Button */}
             <button
               className="lg:hidden text-white p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -120,33 +124,16 @@ export function Navbar() {
                 className="font-condensed text-muted-foreground hover:text-white transition-colors uppercase tracking-wide text-sm py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Staff Login
+                {t.nav.staffLogin}
               </Link>
               <Link
                 href="/book"
                 className="font-condensed text-white uppercase tracking-wide text-sm py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Book Now →
+                {t.nav.bookNow} →
               </Link>
-              <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
-                <button
-                  onClick={() => setLanguage("EN")}
-                  className={`px-3 py-1 rounded text-sm font-condensed transition-colors ${
-                    language === "EN" ? "bg-royal text-white" : "text-muted-foreground hover:text-white"
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  onClick={() => setLanguage("ES")}
-                  className={`px-3 py-1 rounded text-sm font-condensed transition-colors ${
-                    language === "ES" ? "bg-royal text-white" : "text-muted-foreground hover:text-white"
-                  }`}
-                >
-                  ES
-                </button>
-              </div>
+              <LangToggle />
             </div>
           </div>
         )}

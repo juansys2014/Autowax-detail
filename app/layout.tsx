@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Russo_One, Barlow, Barlow_Condensed } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { LanguageProvider } from '@/lib/language-context'
 import './globals.css'
 
 const russoOne = Russo_One({
@@ -54,7 +55,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${russoOne.variable} ${barlow.variable} ${barlowCondensed.variable}`}>
       <body className="font-sans antialiased bg-background">
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
