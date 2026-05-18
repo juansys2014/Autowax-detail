@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
-export default function SellerAutoLogin() {
+function AutoLoginContent() {
   const router = useRouter()
   const params = useSearchParams()
   const [status, setStatus] = useState<"loading" | "error">("loading")
@@ -42,5 +42,18 @@ export default function SellerAutoLogin() {
       <div className="w-8 h-8 border-2 border-[#e8151a] border-t-transparent rounded-full animate-spin" />
       <p className="text-gray-400 text-sm">Iniciando sesión...</p>
     </div>
+  )
+}
+
+export default function SellerAutoLogin() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0f0f0f] flex flex-col items-center justify-center gap-3">
+        <div className="w-8 h-8 border-2 border-[#e8151a] border-t-transparent rounded-full animate-spin" />
+        <p className="text-gray-400 text-sm">Cargando...</p>
+      </div>
+    }>
+      <AutoLoginContent />
+    </Suspense>
   )
 }
