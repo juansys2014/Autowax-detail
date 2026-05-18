@@ -1,6 +1,5 @@
 "use client"
 
-import { formatPhone } from '@/lib/utils/format'
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -51,13 +50,6 @@ export default function LoginPage() {
       router.push('/seller')
     } catch { setSellerError('Connection error') }
     setSellerLoading(false)
-  }
-
-  const formatPhone = (value: string) => {
-    const n = value.replace(/\D/g, '').slice(0, 11)
-    if (n.length <= 3) return n
-    if (n.length <= 6) return `(${n.slice(0,3)}) ${n.slice(3)}`
-    return `(${n.slice(0,3)}) ${n.slice(3,6)}-${n.slice(6)}`
   }
 
   return (
@@ -133,7 +125,7 @@ export default function LoginPage() {
                     </div>
                     <input type="tel" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g, '').slice(0,11))}
                       placeholder="(561) 000-0000" required
-                      className="flex-1 px-4 py-3 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#4a8fe8] transition-colors"/>
+                      className="flex-1 px-4 py-3 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#4a8fe8] transition-colors text-base"/>
                   </div>
                 </div>
                 {sellerError && <p className="text-sm text-[#e8151a]">{sellerError}</p>}
