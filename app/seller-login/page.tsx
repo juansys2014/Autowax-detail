@@ -37,11 +37,12 @@ export default function SellerLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="min-h-screen bg-[#0f0f0f] flex flex-col px-6"
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
-      {/* Top section — logo */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 pb-4">
-        <div className="w-24 h-24 rounded-3xl bg-[#e8151a] flex items-center justify-center mb-6 shadow-2xl shadow-[#e8151a]/40">
+      {/* Logo */}
+      <div className="flex flex-col items-center pt-20 pb-10">
+        <div className="w-24 h-24 rounded-3xl bg-[#e8151a] flex items-center justify-center mb-5 shadow-2xl shadow-[#e8151a]/40">
           <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z"/>
           </svg>
@@ -50,9 +51,8 @@ export default function SellerLoginPage() {
         <p className="text-base text-[#e8151a] font-semibold mt-1">South Florida — Seller Portal</p>
       </div>
 
-      {/* Bottom section — form */}
-      <div className="px-6 pb-10 space-y-4">
-
+      {/* Form */}
+      <div className="space-y-4">
         <div>
           <label className="block text-base font-medium text-gray-400 mb-3">
             Número de teléfono
@@ -90,7 +90,7 @@ export default function SellerLoginPage() {
           {loading ? <><Spinner /> Entrando...</> : "Ingresar"}
         </button>
 
-        <p className="text-sm text-center text-gray-600 pt-2">
+        <p className="text-sm text-center text-gray-600 pt-1">
           Usá el número con el que te registraron en el sistema
         </p>
       </div>
