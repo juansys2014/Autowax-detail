@@ -30,6 +30,11 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Auto Wax Seller',
+    startupImage: '/icons/icon-512.svg',
+  },
+  icons: {
+    apple: '/icons/icon-180.svg',
+    icon: '/icons/icon-192.svg',
   },
 }
 
