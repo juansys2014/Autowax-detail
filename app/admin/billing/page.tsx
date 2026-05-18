@@ -65,8 +65,20 @@ export default function BillingPage() {
   const [deleting,        setDeleting]        = useState(false)
   const [editError,       setEditError]       = useState("")
   const [adminConfirm,    setAdminConfirm]    = useState<{action:'edit'|'delete', invoice:Invoice}|null>(null)
+  const [adminPassword,   setAdminPassword]   = useState("")
+  const [adminVerifying,  setAdminVerifying]  = useState(false)
+  const [adminError,      setAdminError]      = useState("")
+  const [myPerms,         setMyPerms]         = useState<{can_edit:boolean, can_delete:boolean}>({can_edit:false, can_delete:false})
 
-  useEffect(() => { loadData(); loadCatalog() }, [])
+  useEffect(() => { loadData(); loadCatalog(); loadMyPerms() }, [])
+
+  async function loadMyPerms() {
+    try {
+      const res = await fetch('/api/auth/me')
+      const data = await res.json()
+      setMyPerms(data.billingPerms || { can_edit: false, can_delete: false })
+    } catch {}
+  }
 
   async function loadData() {
     setLoading(true)
@@ -229,6 +241,28 @@ export default function BillingPage() {
       else { const d = await res.json(); setEditError(d.error || 'Error') }
     } catch { setEditError('Connection error') }
     setSaving(false)
+  }
+
+  async function handleAdminConfirm() {
+    if (!adminConfirm) return
+    const hasPermission = adminConfirm.action === 'edit' ? myPerms.can_edit : myPerms.can_delete
+    if (!hasPermission) {
+      if (!adminPassword) { setAdminError('Ingresá la contraseña de admin'); return }
+      setAdminVerifying(true)
+      try {
+        const res = await fetch('/api/auth/verify-admin', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: adminPassword }),
+        })
+        const data = await res.json()
+        if (!data.ok) { setAdminError('Contraseña incorrecta'); setAdminVerifying(false); return }
+      } catch { setAdminError('Error de conexión'); setAdminVerifying(false); return }
+      setAdminVerifying(false)
+    }
+    const inv = adminConfirm.invoice
+    setAdminConfirm(null)
+    if (adminConfirm.action === 'edit') openEdit(inv)
+    else setShowDeleteModal(inv)
   }
 
   async function handleDelete() {
@@ -412,15 +446,23 @@ export default function BillingPage() {
                           <Printer className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => inv.status === 'paid' ? setAdminConfirm({action:'edit', invoice:inv}) : openEdit(inv)}
-                          title={inv.status === 'paid' ? 'Requiere autorización admin' : 'Edit'}
-                          className={`p-1.5 rounded-lg transition-colors ${inv.status==='paid' ? 'text-yellow-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-[#4a8fe8] hover:bg-[#2a2a2a]'}`}>
+                          onClick={() => {
+                            if (inv.status !== 'paid') { openEdit(inv); return }
+                            setAdminConfirm({ action: 'edit', invoice: inv })
+                            setAdminPassword(''); setAdminError('')
+                          }}
+                          title={inv.status === 'paid' ? (myPerms.can_edit ? 'Editar invoice pagado' : 'Requiere autorización admin') : 'Edit'}
+                          className={`p-1.5 rounded-lg transition-colors ${inv.status === 'paid' ? 'text-yellow-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-[#4a8fe8] hover:bg-[#2a2a2a]'}`}>
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => inv.status === 'paid' ? setAdminConfirm({action:'delete', invoice:inv}) : setShowDeleteModal(inv)}
-                          title={inv.status === 'paid' ? 'Requiere autorización admin' : 'Delete'}
-                          className={`p-1.5 rounded-lg transition-colors ${inv.status==='paid' ? 'text-yellow-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a]'}`}>
+                          onClick={() => {
+                            if (inv.status !== 'paid') { setShowDeleteModal(inv); return }
+                            setAdminConfirm({ action: 'delete', invoice: inv })
+                            setAdminPassword(''); setAdminError('')
+                          }}
+                          title={inv.status === 'paid' ? (myPerms.can_delete ? 'Borrar invoice pagado' : 'Requiere autorización admin') : 'Delete'}
+                          className={`p-1.5 rounded-lg transition-colors ${inv.status === 'paid' ? 'text-yellow-600 hover:text-yellow-400 hover:bg-[#2a2a2a]' : 'text-gray-400 hover:text-red-400 hover:bg-[#2a2a2a]'}`}>
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -810,30 +852,42 @@ export default function BillingPage() {
           <div className="bg-[#1e1e1e] border border-yellow-500/40 rounded-2xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
               </div>
               <div>
-                <h3 className="font-bold text-white">Autorización de admin</h3>
-                <p className="text-xs text-gray-400">Invoice pagado — acción restringida</p>
+                <h3 className="font-bold text-white">Invoice pagado</h3>
+                <p className="text-xs text-gray-400">{adminConfirm.action === 'edit' ? 'Modificar' : 'Borrar'} afecta la contabilidad</p>
               </div>
             </div>
             <p className="text-sm text-gray-300">
-              <span className="text-white font-medium">{adminConfirm.invoice.invoice_number}</span> ya fue pagado.{' '}
-              {adminConfirm.action === 'edit' ? '¿Querés editarlo de todas formas?' : '¿Querés borrarlo de todas formas?'}
+              <span className="text-white font-medium">{adminConfirm.invoice.invoice_number}</span>
+              {' '}— {adminConfirm.invoice.client_name}
             </p>
+            {!(adminConfirm.action === 'edit' ? myPerms.can_edit : myPerms.can_delete) && (
+              <div className="space-y-2">
+                <label className="text-xs text-gray-400">Contraseña de admin para autorizar</label>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={e => { setAdminPassword(e.target.value); setAdminError('') }}
+                  onKeyDown={e => e.key === 'Enter' && handleAdminConfirm()}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-yellow-500/50 text-sm"
+                  autoFocus
+                />
+                {adminError && <p className="text-xs text-red-400">{adminError}</p>}
+              </div>
+            )}
             <div className="flex gap-3">
               <button onClick={() => setAdminConfirm(null)}
                 className="flex-1 py-2.5 border border-[#2a2a2a] text-gray-400 hover:text-white rounded-lg text-sm">
                 Cancelar
               </button>
-              <button onClick={() => {
-                  const inv = adminConfirm.invoice
-                  setAdminConfirm(null)
-                  if (adminConfirm.action === 'edit') openEdit(inv)
-                  else setShowDeleteModal(inv)
-                }}
-                className="flex-1 py-2.5 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-300 rounded-lg text-sm font-bold">
-                Confirmar
+              <button onClick={handleAdminConfirm} disabled={adminVerifying}
+                className="flex-1 py-2.5 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-300 disabled:opacity-50 rounded-lg text-sm font-bold">
+                {adminVerifying ? 'Verificando...' : 'Confirmar'}
               </button>
             </div>
           </div>

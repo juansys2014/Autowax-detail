@@ -402,25 +402,65 @@ export default function SellersPage() {
 
       {/* ── REFERRAL QR MODAL ── */}
       <Dialog open={showQR} onOpenChange={setShowQR}>
-        <DialogContent className="bg-[#1e1e1e] border-border sm:max-w-md">
-          <DialogHeader><DialogTitle className="text-foreground">Referral QR — {selected?.name}</DialogTitle></DialogHeader>
+        <DialogContent className="bg-[#1e1e1e] border-border sm:max-w-lg">
+          <DialogHeader><DialogTitle className="text-foreground">QR Codes — {selected?.name}</DialogTitle></DialogHeader>
           {selected && (
-            <div className="flex flex-col items-center space-y-4 py-4">
-              <div className="bg-white p-3 rounded-2xl">
-                <QRDisplay url={selected.qr_url || `${loginQRUrl}`} size={200}/>
-              </div>
-              <div className="w-full space-y-2">
-                <Label className="text-muted-foreground">Referral Link</Label>
+            <div className="space-y-6 py-2">
+
+              {/* Referral QR */}
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Input readOnly value={selected.qr_url} className="bg-background border-border text-xs"/>
-                  <Button variant="outline" className="border-border shrink-0"
-                    onClick={() => navigator.clipboard.writeText(selected.qr_url)}>Copy</Button>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#4a8fe8]">Para clientes</span>
+                  <span className="text-xs text-gray-500">— comparte este QR para que reserven citas</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="bg-white p-2 rounded-xl shrink-0">
+                    <QRDisplay url={selected.qr_url} size={130}/>
+                  </div>
+                  <div className="space-y-2 flex-1 min-w-0">
+                    <p className="text-xs text-gray-400">Referral Link</p>
+                    <p className="text-xs text-white break-all font-mono bg-[#0f0f0f] p-2 rounded-lg">{selected.qr_url}</p>
+                    <Button size="sm" variant="outline" className="border-border text-xs h-7"
+                      onClick={() => navigator.clipboard.writeText(selected.qr_url)}>
+                      Copiar link
+                    </Button>
+                  </div>
                 </div>
               </div>
+
+              <div className="border-t border-[#2a2a2a]"/>
+
+              {/* Login QR */}
+              {(() => {
+                const loginUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/seller/auto-login?code=${selected.qr_code}`
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-green-400">Para el seller</span>
+                      <span className="text-xs text-gray-500">— escanea para entrar directo al panel</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="bg-white p-2 rounded-xl shrink-0">
+                        <QRDisplay url={loginUrl} size={130}/>
+                      </div>
+                      <div className="space-y-2 flex-1 min-w-0">
+                        <p className="text-xs text-gray-400">Login Link</p>
+                        <p className="text-xs text-white break-all font-mono bg-[#0f0f0f] p-2 rounded-lg">{loginUrl}</p>
+                        <Button size="sm" variant="outline" className="border-border text-xs h-7"
+                          onClick={() => navigator.clipboard.writeText(loginUrl)}>
+                          Copiar link
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowQR(false)} className="border-border">Close</Button>
+            <Button variant="outline" onClick={() => setShowQR(false)} className="border-border">Cerrar</Button>
+            <Button className="bg-[#4a8fe8] hover:bg-[#3a7fd8]" onClick={() => window.print()}>Imprimir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
