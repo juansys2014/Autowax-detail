@@ -2,7 +2,7 @@
 
 import { formatPhone } from '@/lib/utils/format'
 import { useState, useEffect } from "react"
-import { Plus, Search, Edit, QrCode, Trash2, Smartphone, X, Check, RefreshCw } from "lucide-react"
+import { Plus, Search, Edit, QrCode, Smartphone, RefreshCw } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -179,10 +179,6 @@ export default function SellersPage() {
           <p className="text-sm text-muted-foreground">Manage your referral partners</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowLoginQR(true)}
-            className="border-[#2a2a2a] text-gray-300 hover:text-white gap-2">
-            <Smartphone className="w-4 h-4"/> Seller Login QR
-          </Button>
           <Button onClick={() => { setShowAdd(true); setSaveError(null) }} className="bg-primary hover:bg-primary/90">
             <Plus className="mr-2 h-4 w-4"/> Add Seller
           </Button>

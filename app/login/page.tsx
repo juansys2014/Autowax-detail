@@ -144,15 +144,6 @@ export default function LoginPage() {
                 <p className="text-xs text-center text-muted-foreground">
                   Log in with your registered phone number
                 </p>
-                <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg p-3 space-y-1">
-                  <p className="text-xs text-gray-500 font-medium mb-1">Test accounts:</p>
-                  {[['15612000001','Javier Lopez'],['15612000002','Maria Garcia'],['15612000003','Roberto Cruz']].map(([p,n])=>(
-                    <button key={p} type="button" onClick={()=>setPhone(p)}
-                      className="w-full text-left text-xs text-gray-400 hover:text-white px-2 py-1 hover:bg-[#1e1e1e] rounded transition-colors">
-                      {n} — {p}
-                    </button>
-                  ))}
-                </div>
               </form>
             )}
           </div>
